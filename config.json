@@ -1,0 +1,9 @@
+{
+    "file_path": "restaurants.xlsx",
+    "output_path": "index.html",
+    "map_center": [59.832213, 30.251091],
+    "zoom_start": 11,
+    "log_file": "log.txt",
+    "audit_folder": "Аудиты",
+    "excel_output_path": "restaurants_output.xlsx"
+}
