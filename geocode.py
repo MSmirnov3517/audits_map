@@ -328,42 +328,33 @@ import os
 
 
 def auto_push(file_path, message="update index.html"):
+    """Автоматический pull, коммит и push в GitHub с защитой от untracked файлов."""
     try:
-        logging.info("Попытка выполнить git push...")
-
         if not os.path.exists(".git"):
-            logging.error("[ОШИБКА] Текущая директория не является Git-репозиторием")
+            logging.error("Текущая директория не является Git-репозиторием")
             return
 
         repo = Repo(".")
+        if repo.untracked_files:
+            logging.error("Есть неотслеживаемые файлы, которые могут помешать pull: %s", repo.untracked_files)
+            return
 
-        # Добавляем явное указание ветки
-        branch = repo.active_branch.name
+        origin = repo.remote(name='origin')
+        origin.pull('main')
 
-        # Проверяем изменения
         if not repo.index.diff(None) and not repo.untracked_files:
-            logging.info("[ИНФО] Нет изменений для коммита")
+            logging.info("Нет изменений для коммита")
             return
 
         repo.index.add([file_path])
         repo.index.commit(message)
-
-        if not repo.remotes:
-            logging.error("[ОШИБКА] Не настроен удаленный репозиторий (origin)")
-            return
-
-        origin = repo.remote(name='origin')
-
-        # Изменяем push с явным указанием ветки
-        push_info = origin.push(refspec=f'{branch}:{branch}')
-
-        # Проверяем результат push
-        if any(info.flags & info.ERROR for info in push_info):
-            logging.warning("[ПРЕДУПРЕЖДЕНИЕ] Возникли проблемы при отправке изменений")
+        push_info = origin.push('main')
+        if push_info and push_info[0].flags & push_info[0].ERROR:
+            logging.error("Ошибка при push: %s", push_info[0].summary)
         else:
-            logging.info(f"[УСПЕХ] index.html успешно отправлен в GitHub (ветка {branch})")
-
+            logging.info("Файл успешно отправлен в GitHub")
     except Exception as e:
-        logging.error(f"[ОШИБКА] При работе с Git: {str(e)}", exc_info=True)
+        logging.error("Ошибка при работе с Git: %s", e)
+
 
 auto_push(output_path)
